@@ -70,7 +70,14 @@ php artisan key:generate
 php artisan migrate:fresh --seed
 ```
 
-### 4. تشغيل المشروع
+### 4. دوكر (Docker - خيار بديل)
+إذا كنت تفضل استخدام Docker، يمكنك تشغيل النظام بالكامل بأمر واحد:
+```bash
+docker-compose up -d --build
+```
+سيكون النظام متاحاً على الرابط `http://localhost:8080`.
+
+### 5. تشغيل المشروع
 ```bash
 # تشغيل الخادم المحلي
 php artisan serve

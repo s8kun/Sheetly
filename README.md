@@ -70,9 +70,16 @@ php artisan key:generate
 php artisan migrate:fresh --seed
 ```
 
-### 4. Running the Application
+### 4. Docker (Alternative)
+If you prefer using Docker, you can start the entire stack with a single command:
 ```bash
-# Start the backend
+docker-compose up -d --build
+```
+The application will be available at `http://localhost:8080`.
+
+### 5. Running the Application
+```bash
+# Start the backend (Local)
 php artisan serve
 ```
 

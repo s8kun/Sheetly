@@ -1,0 +1,58 @@
+services:
+  # PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sheetly-app
+    container_name: sheetly-app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    networks:
+      - sheetly-network
+
+  # Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: sheetly-webserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - sheetly-network
+
+  # MySQL Service
+  db:
+    image: mysql:8.0
+    container_name: sheetly-db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_USER: ${DB_USERNAME:-laravel}
+    volumes:
+      - sheetly-db-data:/var/lib/mysql
+    networks:
+      - sheetly-network
+
+networks:
+  sheetly-network:
+    driver: bridge
+
+volumes:
+  sheetly-db-data:
+    driver: local
