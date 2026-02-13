@@ -1,5 +1,7 @@
 # 📚 Sheetly - Student Resource Platform
 
+[النسخة العربية (Arabic Version)](README.ar.md)
+
 Sheetly is a modern web application built with Laravel 12 that allows students to upload, search, and download study materials (Sheets, Midterms, and Finals) for their academic subjects.
 
 ## 🚀 Features
