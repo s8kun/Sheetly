@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 📚 Sheetly - Student Resource Platform
 
 Sheetly is a modern web application built with Laravel 12 that allows students to upload, search, and download study materials (Sheets, Midterms, and Finals) for their academic subjects.
@@ -63,3 +64,6 @@ php artisan test
 ## 📝 License
 
 This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+=======
+# Sheetly
+>>>>>>> 7bd85ef18c69ed12068f07e1f3aea687f0af800d
