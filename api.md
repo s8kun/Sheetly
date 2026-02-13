@@ -1,81 +1,84 @@
-# 📚 Sheetly API Documentation
+<div align="center">
+  <h1>🚀 Sheetly API Specification</h1>
+  <p>Official API documentation for the Sheetly Resource Platform</p>
+  
+  [![Version](https://img.shields.io/badge/API-v1.0-blue?style=flat-square)](#)
+  [![Auth](https://img.shields.io/badge/Auth-Sanctum-orange?style=flat-square)](#)
+  <br>
+  <a href="api.ar.md"><strong>النسخة العربية (Arabic Version)</strong></a>
+</div>
 
-Welcome to the Sheetly API. This project provides a platform for students to share and access study materials (Sheets, Midterms, Finals).
-
-[النسخة العربية (Arabic Version)](api.ar.md)
+---
 
 ## 🔐 Authentication
-The API uses **Laravel Sanctum** for authentication.
-- All protected routes require a `Bearer {token}` in the `Authorization` header.
-- Roles: `user` (default), `admin`.
+The API utilizes **Laravel Sanctum** for secure access. 
+- **Header:** `Authorization: Bearer {token}`
+- **Email Restriction:** Only `@uob.edu.ly` domains are permitted for registration.
 
 ---
 
-## 🔑 Authentication Endpoints
+## 📌 Endpoints Summary
 
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/register` | Public | Register a new user (`name`, `email`, `password`, `password_confirmation`) |
-| `POST` | `/api/login` | Public | Login and receive a token (`email`, `password`) |
-| `POST` | `/api/logout` | User | Revoke the current token |
+### 🔑 Identity & Access
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/register` | Create a new student account |
+| `POST` | `/api/login` | Authenticate and retrieve Bearer token |
+| `POST` | `/api/logout` | Invalidate current session |
 
-> **Note:** Registration is restricted to emails ending with `@uob.edu.ly`.
+### 🏛 Subject Catalog
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/subjects` | List all subjects (Searchable) |
+| `GET` | `/api/subjects/{code}` | Get subject profile (Chapters/Exams) |
+| `GET` | `/api/subjects/{code}/chapters/{num}` | Get specific chapter sheets |
+
+### 📄 Resource Management
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/sheets/{id}` | Detailed resource view |
+| `GET` | `/api/sheets/{id}/download` | Secure download link generation |
+| `POST` | `/api/sheets/upload` | Upload new PDF resource |
+| `GET` | `/api/my-sheets` | Current user's upload history |
+| `DELETE` | `/api/sheets/{id}` | Remove a resource |
 
 ---
 
-## 🏛 Subjects
-Endpoints for managing and listing academic subjects.
+## 🛠 Administration (Restricted)
+These endpoints require an **Admin** role.
 
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/subjects` | Public | List all subjects (supports `?search=` for name or code) |
-| `GET` | `/api/subjects/{code}` | Public | Get subject details (chapters, midterms, finals) |
-| `GET` | `/api/subjects/{code}/chapters/{num}` | Public | Get sheets for a specific chapter number |
-| `POST` | `/api/admin/subjects` | **Admin** | Create a new subject (`name`, `code`) |
-| `PATCH/PUT` | `/api/admin/subjects/{code}` | **Admin** | Update subject details |
-| `DELETE` | `/api/admin/subjects/{code}` | **Admin** | Delete a subject |
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/admin/subjects` | Register a new academic subject |
+| `PATCH` | `/api/admin/subjects/{code}` | Modify subject metadata |
+| `GET` | `/api/admin/sheets/pending` | View moderation queue |
+| `PATCH` | `/api/admin/sheets/{id}/approve` | Approve a resource for public view |
+| `PATCH` | `/api/admin/sheets/{id}/reject` | Reject and hide a resource |
 
 ---
 
-## 📄 Sheets
-Endpoints for uploading, managing, and downloading sheets.
+## 📤 Upload Specification
+To upload a resource, send a `multipart/form-data` request to `/api/sheets/upload`:
 
-| Method | Endpoint | Access | Description |
+| Field | Type | Required | Notes |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/sheets/{id}` | Public* | Get sheet details |
-| `GET` | `/api/sheets/{id}/download` | Public* | Get download URL and increment counter |
-| `POST` | `/api/sheets/upload` | User | Upload a new sheet (PDF, max 20MB) |
-| `GET` | `/api/my-sheets` | User | List sheets uploaded by the current user |
-| `DELETE` | `/api/sheets/{id}` | Owner/Admin | Delete a sheet |
-
-### 📤 Upload Parameters
-| Field | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `title` | `string` | Yes | Title of the sheet |
-| `subject_id` | `integer` | Yes | ID of the subject |
+| `title` | `string` | Yes | Max 255 chars |
+| `subject_id` | `int` | Yes | Valid Subject ID |
 | `type` | `enum` | Yes | `chapter`, `midterm`, `final` |
-| `chapter_number` | `integer` | Conditional | Required if `type` is `chapter` |
-| `file` | `file` | Yes | PDF file (max 20480 KB) |
-
-> \* Public access is limited to `approved` sheets. Owners and Admins can access `pending` sheets.
+| `chapter_number` | `int` | Conditional | Required if type is `chapter` |
+| `file` | `file` | Yes | PDF only, Max 20MB |
 
 ---
 
-## 🛠 Admin Moderation
-Exclusive endpoints for administrators.
-
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/admin/sheets/pending` | **Admin** | List all sheets waiting for approval |
-| `PATCH` | `/api/admin/sheets/{id}/approve` | **Admin** | Approve a pending sheet |
-| `PATCH` | `/api/admin/sheets/{id}/reject` | **Admin** | Reject a pending sheet |
+## 🌐 Error Codes
+| Code | Meaning |
+| :--- | :--- |
+| `200/201` | Success / Created |
+| `401` | Unauthenticated (Missing/Invalid Token) |
+| `403` | Forbidden (Insufficient Permissions) |
+| `422` | Validation Error (Check request parameters) |
 
 ---
-
-## 💡 Notes
-- **Subject Codes:** All subject codes are automatically converted to **UPPERCASE** (e.g., `se311` becomes `SE311`).
-- **File Storage:** PDFs are stored on **Cloudinary**.
-- **Sheet Status:**
-  - `pending`: Waiting for admin review.
-  - `approved`: Visible to everyone.
-  - `rejected`: Not visible to the public.
+<div align="center">
+  Built with Laravel 12 & ❤️
+</div>
