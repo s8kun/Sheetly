@@ -5,16 +5,9 @@ if [ ! -d "vendor" ]; then
     composer install --no-interaction --optimize-autoloader
 fi
 
-# Wait for database to be ready
-echo "Waiting for database..."
-until php artisan db:monitor; do
-  >&2 echo "Database is unavailable - sleeping"
-  sleep 2
-done
-
-# Run migrations and seeders
+# Run migrations and seeders (Force because it's production)
+# We can skip db:monitor if it hangs on Render, but let's keep it if your DB is ready
 php artisan migrate --force
-php artisan db:seed --force
 
-# Start PHP-FPM
-php-fpm
+# Start Apache
+apache2-foreground
