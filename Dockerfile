@@ -34,6 +34,14 @@ WORKDIR /var/www
 # Copy application files
 COPY . /var/www
 
+# Set environment to production for optimization
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+ENV LOG_CHANNEL=stderr
+
+# Install dependencies
+RUN composer install --no-interaction --no-plugins --no-scripts --optimize-autoloader
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
