@@ -111,6 +111,40 @@ class AuthController extends Controller
     }
 
     /**
+     * Resend OTP to user.
+     */
+    public function resendOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user->email_verified_at) {
+            return response()->json(['message' => 'هذا الحساب مفعّل مسبقاً.'], 400);
+        }
+
+        $code = rand(1000, 9999);
+        Otp::updateOrCreate(
+            ['email' => $request->email],
+            [
+                'code' => $code,
+                'expires_at' => Carbon::now()->addMinutes(5),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        try {
+            Mail::to($request->email)->send(new OtpMail($code));
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'فشل في إرسال الرمز.'], 500);
+        }
+
+        return response()->json(['message' => 'تم إعادة إرسال رمز التحقق بنجاح.']);
+    }
+
+    /**
      * Login user and create token (Standard Login).
      */
     public function login(Request $request): JsonResponse
