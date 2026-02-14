@@ -6,6 +6,7 @@ use App\Models\User;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -41,6 +42,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->environment('production')) {
+            Config::set('mail.mailers.smtp.host', 'smtp.gmail.com');
+            Config::set('mail.mailers.smtp.port', 587);
+            Config::set('mail.mailers.smtp.encryption', 'tls');
+            Config::set('mail.from.address', 'hello@sheetly.com');
+            Config::set('mail.from.name', 'Sheetly');
+        }
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
