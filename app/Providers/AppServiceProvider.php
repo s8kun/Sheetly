@@ -42,13 +42,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (app()->environment('production')) {
-            Config::set('mail.mailers.smtp.host', 'smtp.gmail.com');
-            Config::set('mail.mailers.smtp.port', 587);
-            Config::set('mail.mailers.smtp.encryption', 'tls');
-            Config::set('mail.from.address', 'hello@sheetly.com');
-            Config::set('mail.from.name', 'Sheetly');
-        }
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
