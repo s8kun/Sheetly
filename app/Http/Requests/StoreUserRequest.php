@@ -4,14 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateSubjectRequest extends FormRequest
+class StoreUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user() && $this->user()->role === 'admin';
+        return true;
     }
 
     /**
@@ -21,12 +21,11 @@ class UpdateSubjectRequest extends FormRequest
      */
     public function rules(): array
     {
-        $subject = $this->route('subject');
-        $subjectId = $subject instanceof \App\Models\Subject ? $subject->id : $subject;
-
         return [
-            'name' => 'sometimes|required|string|max:255',
-            'code' => 'sometimes|required|string|max:50|unique:subjects,code,'.$subjectId,
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|in:student,admin',
         ];
     }
 }

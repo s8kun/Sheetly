@@ -12,6 +12,7 @@ class UpdateSheetRequest extends FormRequest
     public function authorize(): bool
     {
         $sheet = $this->route('sheet');
+
         return $this->user() && ($this->user()->role === 'admin' || $this->user()->id === $sheet->user_id);
     }
 
@@ -31,12 +32,16 @@ class UpdateSheetRequest extends FormRequest
                 'integer',
                 'min:1',
                 function ($attribute, $value, $fail) {
-                    $type = $this->input('type');
+                    $sheet = $this->route('sheet');
+                    $type = $this->input('type') ?? ($sheet instanceof \App\Models\Sheet ? $sheet->type : null);
 
-                    if ($type === 'chapter' && !$value) {
-                        $fail('Chapter number is required when type is chapter.');
+                    if ($type === 'chapter' && ! $value && ! $this->has('chapter_number')) {
+                        // إذا كان النوع شابتر ولم يتم توفير رقم (سواء في الداتا بيز أو في الريكويست)
+                        if (! $sheet || ! $sheet->chapter_number) {
+                            $fail('Chapter number is required when type is chapter.');
+                        }
                     }
-                }
+                },
             ],
             'file' => 'sometimes|required|file|mimes:pdf|max:20480',
         ];

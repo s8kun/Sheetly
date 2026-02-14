@@ -1,9 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\SheetController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,8 +15,9 @@ use App\Http\Controllers\SubjectController;
 
 // Authentication
 Route::controller(AuthController::class)->group(function () {
-    Route::post('/register', 'register');
-    Route::post('/login', 'login');
+    Route::post('/register', 'register')->middleware('throttle:otp');
+    Route::post('/register/verify', 'verifyRegistration')->middleware('throttle:otp');
+    Route::post('/login', 'login')->middleware('throttle:login');
 });
 
 // Public Routes
@@ -23,6 +26,9 @@ Route::get('/subjects/{subject}', [SubjectController::class, 'show']);
 Route::get('/subjects/{subject}/chapters/{chapterNumber}', [SubjectController::class, 'showChapter']);
 Route::get('/sheets/{sheet}', [SheetController::class, 'show']); // مسار عرض الشيت الواحد (مسموح للكل كبيانات)
 Route::get('/sheets/{sheet}/download', [SheetController::class, 'download']);
+
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->middleware('throttle:otp');
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->middleware('throttle:otp');
 
 // Protected Routes (User & Admin)
 Route::middleware('auth:sanctum')->group(function () {
@@ -44,5 +50,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/subjects', [SubjectController::class, 'store']);
         Route::match(['put', 'patch'], '/subjects/{subject}', [SubjectController::class, 'update']);
         Route::delete('/subjects/{subject}', [SubjectController::class, 'destroy']);
+
+        // User Management
+        Route::apiResource('users', UserController::class);
     });
 });

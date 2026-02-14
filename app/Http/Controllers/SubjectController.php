@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Subject;
-use App\Models\Sheet;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use App\Http\Requests\StoreSubjectRequest;
 use App\Http\Requests\UpdateSubjectRequest;
+use App\Models\Subject;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
 class SubjectController extends Controller
@@ -19,13 +18,13 @@ class SubjectController extends Controller
 
         if ($request->filled('search')) {
             $search = strtoupper($request->input('search'));
-            
+
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%");
+                    ->orWhere('name', 'like', "%{$search}%");
             })
-            ->orderByRaw("CASE WHEN code LIKE '{$search}%' THEN 1 ELSE 2 END")
-            ->orderBy('code');
+                ->orderByRaw("CASE WHEN code LIKE '{$search}%' THEN 1 ELSE 2 END")
+                ->orderBy('code');
         } else {
             $query->orderBy('code');
         }
@@ -36,7 +35,7 @@ class SubjectController extends Controller
     // عرض تفاصيل المادة
     public function show(Subject $subject): JsonResponse
     {
-        $chapters = Sheet::where('subject_id', $subject->id)
+        $chapters = $subject->sheets()
             ->where('status', 'approved')
             ->where('type', 'chapter')
             ->whereNotNull('chapter_number')
@@ -45,13 +44,13 @@ class SubjectController extends Controller
             ->orderBy('chapter_number')
             ->pluck('chapter_number');
 
-        $midterms = Sheet::where('subject_id', $subject->id)
+        $midterms = $subject->sheets()
             ->where('status', 'approved')
             ->where('type', 'midterm')
             ->latest()
             ->get();
 
-        $finals = Sheet::where('subject_id', $subject->id)
+        $finals = $subject->sheets()
             ->where('status', 'approved')
             ->where('type', 'final')
             ->latest()
@@ -68,7 +67,7 @@ class SubjectController extends Controller
     // عرض شيتات شباتر مادة واحدة
     public function showChapter(Subject $subject, int $chapterNumber): JsonResponse
     {
-        $sheets = Sheet::where('subject_id', $subject->id)
+        $sheets = $subject->sheets()
             ->where('status', 'approved')
             ->where('type', 'chapter')
             ->where('chapter_number', $chapterNumber)
@@ -86,6 +85,7 @@ class SubjectController extends Controller
     public function store(StoreSubjectRequest $request): JsonResponse
     {
         $subject = Subject::create($request->validated());
+
         return response()->json(['message' => 'Subject created.', 'data' => $subject], 201);
     }
 
@@ -93,6 +93,7 @@ class SubjectController extends Controller
     public function update(UpdateSubjectRequest $request, Subject $subject): JsonResponse
     {
         $subject->update($request->validated());
+
         return response()->json(['message' => 'Subject updated.', 'data' => $subject]);
     }
 
@@ -100,6 +101,7 @@ class SubjectController extends Controller
     public function destroy(Subject $subject): JsonResponse
     {
         $subject->delete();
+
         return response()->json(['message' => 'Subject deleted.']);
     }
 }
