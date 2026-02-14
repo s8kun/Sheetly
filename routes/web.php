@@ -1,7 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
-
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,4 +23,20 @@ Route::get('/debug-smtp', function () {
         // لو هذا طلع NULL معناها Render مش قاري المتغير من الأساس
         'from_address' => Config::get('mail.from.address'),
     ];
+});
+Route::get('/test-email', function () {
+    try {
+        Mail::raw('هذا اختبار من سيرفر Render', function ($message) {
+            $message->to('uob.sheetly@gmail.com') // ابعت لنفسك عشان تتأكد
+            ->subject('تجربة SMTP');
+        });
+
+        return 'تم الإرسال بنجاح! المشكلة انحلت.';
+    } catch (\Exception $e) {
+        // هذا السطر حيعطينا الزبدة
+        return response()->json([
+            'error_message' => $e->getMessage(),
+            'error_code' => $e->getCode(),
+        ], 500);
+    }
 });
