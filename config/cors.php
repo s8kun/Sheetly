@@ -19,13 +19,17 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        'https://sheetly-omega.vercel.app',
+        'http://localhost:3000',
+        'http://localhost:5173',
+    ],
 
-    'allowed_origins_patterns' => ['#^https://.*\.vercel\.app$#'],
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => ['Authorization', 'Content-Type', 'X-XSRF-TOKEN'],
+    'exposed_headers' => [],
 
     'max_age' => 0,
 
