@@ -5,6 +5,7 @@ use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\SheetController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -12,6 +13,20 @@ use Illuminate\Support\Facades\Route;
 | API Routes
 |--------------------------------------------------------------------------
 */
+
+// Scheduler Trigger (For Render/UptimeRobot)
+Route::get('/run-scheduler/{token}', function ($token) {
+    if ($token !== config('app.scheduler_token')) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    Artisan::call('schedule:run');
+
+    return response()->json([
+        'message' => 'Schedule executed successfully',
+        'output' => Artisan::output(),
+    ]);
+});
 
 // Authentication
 Route::controller(AuthController::class)->group(function () {

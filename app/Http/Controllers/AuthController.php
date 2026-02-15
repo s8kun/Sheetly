@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RegisterRequest;
 use App\Mail\OtpMail;
 use App\Models\Otp;
 use App\Models\User;
@@ -12,39 +13,38 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
     /**
      * Register a new user - Stage 1: Create user and send OTP.
      */
-    public function register(Request $request): JsonResponse
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                'unique:users',
-                'ends_with:@uob.edu.ly',
-            ],
-            'password' => 'required|string|min:8|confirmed',
-        ], [
-            'email.ends_with' => 'يجب استخدام البريد الجامعي الخاص بجامعة بنغازي (@uob.edu.ly) فقط.',
-            'email.unique' => 'هذا البريد مسجل مسبقاً.',
-        ]);
+        $user = User::where('email', $request->email)->first();
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+        if ($user) {
+            if ($user->email_verified_at) {
+                return response()->json([
+                    'errors' => [
+                        'email' => ['هذا البريد مسجل مسبقاً.'],
+                    ],
+                ], 422);
+            }
+
+            // Recycle unverified account
+            $user->update([
+                'name' => $request->name,
+                'password' => Hash::make($request->password),
+            ]);
+        } else {
+            // Create new account
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
         }
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
 
         // Send OTP for email verification
         $code = rand(1000, 9999);

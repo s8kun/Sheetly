@@ -41,6 +41,49 @@ test('it rejects registration with non-uob email', function () {
     $response->assertJsonValidationErrors(['email']);
 });
 
+test('it recycles unverified account during registration', function () {
+    $user = User::factory()->create([
+        'name' => 'Old Name',
+        'email' => 'test@uob.edu.ly',
+        'password' => Hash::make('oldpassword'),
+        'email_verified_at' => null,
+    ]);
+
+    $response = $this->postJson('/api/register', [
+        'name' => 'New Name',
+        'email' => 'test@uob.edu.ly',
+        'password' => 'newpassword123',
+        'password_confirmation' => 'newpassword123',
+    ]);
+
+    $response->assertStatus(201);
+
+    $user->refresh();
+    expect($user->name)->toBe('New Name');
+    expect(Hash::check('newpassword123', $user->password))->toBeTrue();
+
+    $this->assertDatabaseHas('otps', ['email' => 'test@uob.edu.ly']);
+    Mail::assertSent(OtpMail::class);
+});
+
+test('it rejects registration if email is already verified', function () {
+    User::factory()->create([
+        'email' => 'verified@uob.edu.ly',
+        'email_verified_at' => now(),
+    ]);
+
+    $response = $this->postJson('/api/register', [
+        'name' => 'Test User',
+        'email' => 'verified@uob.edu.ly',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ]);
+
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['email']);
+    $response->assertJsonFragment(['هذا البريد مسجل مسبقاً.']);
+});
+
 test('it can verify registration with otp', function () {
     $user = User::factory()->create([
         'email' => 'test@uob.edu.ly',
