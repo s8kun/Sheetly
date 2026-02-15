@@ -79,13 +79,21 @@ class SheetController extends Controller
                 break;
         }
 
-        $upload = $cloudinary->uploadApi()->upload(
-            $request->file('file')->getRealPath(),
-            [
-                'folder' => $folder,
-                'resource_type' => 'raw'
-            ]
-        );
+        try {
+            $upload = $cloudinary->uploadApi()->upload(
+                $request->file('file')->getRealPath(),
+                [
+                    'folder' => $folder,
+                    'resource_type' => 'raw'
+                ]
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Cloudinary Upload Failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'File upload failed. Please check the file size or try again later.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
 
         $sheet = Sheet::create([
             'title' => $request->title,

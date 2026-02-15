@@ -43,7 +43,7 @@ class UpdateSheetRequest extends FormRequest
                     }
                 },
             ],
-            'file' => 'sometimes|required|file|mimes:pdf|max:20480',
+            'file' => 'sometimes|required|file|mimes:pdf|max:10240',
         ];
     }
 }
