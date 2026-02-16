@@ -27,22 +27,7 @@ class UpdateSheetRequest extends FormRequest
             'title' => 'sometimes|required|string|max:255',
             'subject_id' => 'sometimes|required|exists:subjects,id',
             'type' => 'sometimes|required|in:chapter,midterm,final',
-            'chapter_number' => [
-                'nullable',
-                'integer',
-                'min:1',
-                function ($attribute, $value, $fail) {
-                    $sheet = $this->route('sheet');
-                    $type = $this->input('type') ?? ($sheet instanceof \App\Models\Sheet ? $sheet->type : null);
-
-                    if ($type === 'chapter' && ! $value && ! $this->has('chapter_number')) {
-                        // إذا كان النوع شابتر ولم يتم توفير رقم (سواء في الداتا بيز أو في الريكويست)
-                        if (! $sheet || ! $sheet->chapter_number) {
-                            $fail('Chapter number is required when type is chapter.');
-                        }
-                    }
-                },
-            ],
+            'chapter_number' => 'nullable|integer|min:1',
             'file' => 'sometimes|required|file|mimes:pdf|max:10240',
         ];
     }

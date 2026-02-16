@@ -2,21 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreSheetRequest;
 use App\Models\Sheet;
 use App\Models\Subject;
+use Cloudinary\Cloudinary;
 use Illuminate\Http\JsonResponse;
-use App\Enums\Status;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Cloudinary\Cloudinary;
-use App\Http\Requests\StoreSheetRequest;
 
 class SheetController extends Controller
 {
     // عرض الشيتات المعتمدة (للاستخدام العام)
     public function index(): JsonResponse
     {
-        $sheets = Sheet::where('status', "approved")
+        $sheets = Sheet::where('status', 'approved')
             ->with('subject')
             ->latest()
             ->get();
@@ -49,9 +48,9 @@ class SheetController extends Controller
     // عرض بيانات شيت واحد
     public function show(Sheet $sheet): JsonResponse
     {
-        if ($sheet->status !== "approved") {
+        if ($sheet->status !== 'approved') {
             $user = Auth::user();
-            if (!$user || ($user->role !== 'admin' && $user->id !== $sheet->user_id)) {
+            if (! $user || ($user->role !== 'admin' && $user->id !== $sheet->user_id)) {
                 abort(403, 'This sheet is pending approval.');
             }
         }
@@ -63,19 +62,28 @@ class SheetController extends Controller
     public function store(StoreSheetRequest $request): JsonResponse
     {
         $subject = Subject::findOrFail($request->subject_id);
+
+        $chapterNumber = $request->chapter_number;
+
+        if ($request->type === 'chapter' && ! $request->filled('chapter_number')) {
+            $chapterNumber = Sheet::where('subject_id', $subject->id)
+                ->where('type', 'chapter')
+                ->max('chapter_number') + 1;
+        }
+
         $cloudinary = app(Cloudinary::class);
-        
+
         $folder = "Sheetly/{$subject->code}";
 
         switch ($request->type) {
             case 'chapter':
-                $folder .= "/Chapters/Chapter-{$request->chapter_number}";
+                $folder .= "/Chapters/Chapter-{$chapterNumber}";
                 break;
             case 'midterm':
-                $folder .= "/Midterms" . ($request->filled('chapter_number') ? "/Midterm-{$request->chapter_number}" : "");
+                $folder .= '/Midterms'.($chapterNumber ? "/Midterm-{$chapterNumber}" : '');
                 break;
             case 'final':
-                $folder .= "/Finals" . ($request->filled('chapter_number') ? "/Final-{$request->chapter_number}" : "");
+                $folder .= '/Finals'.($chapterNumber ? "/Final-{$chapterNumber}" : '');
                 break;
         }
 
@@ -84,14 +92,15 @@ class SheetController extends Controller
                 $request->file('file')->getRealPath(),
                 [
                     'folder' => $folder,
-                    'resource_type' => 'raw'
+                    'resource_type' => 'raw',
                 ]
             );
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Cloudinary Upload Failed: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Cloudinary Upload Failed: '.$e->getMessage());
+
             return response()->json([
                 'message' => 'File upload failed. Please check the file size or try again later.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
 
@@ -100,42 +109,44 @@ class SheetController extends Controller
             'subject_id' => $request->subject_id,
             'user_id' => Auth::id(),
             'type' => $request->type,
-            'chapter_number' => $request->chapter_number,
+            'chapter_number' => $chapterNumber,
             'file_url' => $upload['secure_url'],
             'status' => Auth::user()->role === 'admin' ? 'approved' : 'pending',
         ]);
 
         return response()->json([
             'message' => 'Sheet uploaded successfully.',
-            'data' => $sheet
+            'data' => $sheet,
         ], 201);
     }
 
     // تحميل الشيت
     public function download(Sheet $sheet): JsonResponse
     {
-        if ($sheet->status !== "approved" && (!Auth::check() || (Auth::user()->role !== 'admin' && Auth::id() !== $sheet->user_id))) {
+        if ($sheet->status !== 'approved' && (! Auth::check() || (Auth::user()->role !== 'admin' && Auth::id() !== $sheet->user_id))) {
             abort(403);
         }
 
         $sheet->increment('downloads_count');
 
         return response()->json([
-            'download_url' => $sheet->file_url
+            'download_url' => $sheet->file_url,
         ]);
     }
 
     // موافقة (أدمن فقط)
     public function approve(Sheet $sheet): JsonResponse
     {
-        $sheet->update(['status' => "approved"]);
+        $sheet->update(['status' => 'approved']);
+
         return response()->json(['message' => 'Sheet approved.']);
     }
 
     // رفض (أدمن فقط)
     public function reject(Sheet $sheet): JsonResponse
     {
-        $sheet->update(['status' => "rejected"]);
+        $sheet->update(['status' => 'rejected']);
+
         return response()->json(['message' => 'Sheet rejected.']);
     }
 
@@ -147,6 +158,7 @@ class SheetController extends Controller
         }
 
         $sheet->delete();
+
         return response()->json(['message' => 'Sheet deleted successfully.']);
     }
 }

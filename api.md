@@ -1,84 +1,113 @@
-<div align="center">
-  <h1>🚀 Sheetly API Specification</h1>
-  <p>Official API documentation for the Sheetly Resource Platform</p>
-  
-  [![Version](https://img.shields.io/badge/API-v1.0-blue?style=flat-square)](#)
-  [![Auth](https://img.shields.io/badge/Auth-Sanctum-orange?style=flat-square)](#)
-  <br>
-  <a href="api.ar.md"><strong>النسخة العربية (Arabic Version)</strong></a>
-</div>
+# 🚀 Sheetly API Documentation
+
+Welcome to the official API documentation for **Sheetly**, a specialized platform for managing and sharing academic resources at the University of Benghazi.
 
 ---
 
-## 🔐 Authentication
-The API utilizes **Laravel Sanctum** for secure access. 
-- **Header:** `Authorization: Bearer {token}`
-- **Email Restriction:** Only `@uob.edu.ly` domains are permitted for registration.
+## 🔐 Authentication & Security
+
+The API uses **Laravel Sanctum** for secure authentication.
+
+| Feature | Details |
+| :--- | :--- |
+| **Auth Type** | Bearer Token (Sanctum) |
+| **Header** | `Authorization: Bearer {your_token}` |
+| **Email Domain** | Restricted to `@uob.edu.ly` |
+| **Base URL** | `https://your-domain.com/api` |
 
 ---
 
-## 📌 Endpoints Summary
+## 📌 Public Endpoints
 
-### 🔑 Identity & Access
+### 🔑 Authentication Flow
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/register` | Create a new student account |
-| `POST` | `/api/login` | Authenticate and retrieve Bearer token |
-| `POST` | `/api/logout` | Invalidate current session |
+| `POST` | `/register` | Register with student name, university email, and password. |
+| `POST` | `/register/verify` | Verify email using the 4-digit OTP code sent to your inbox. |
+| `POST` | `/resend-otp` | Resend the verification OTP to your university email. |
+| `POST` | `/login` | Authenticate and receive a Bearer token. |
+| `POST` | `/forgot-password` | Request a password reset link (sent to email). |
+| `POST` | `/reset-password` | Submit new password using the token received via email. |
 
-### 🏛 Subject Catalog
+### 🏛 Academic Catalog
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/subjects` | List all subjects (Searchable) |
-| `GET` | `/api/subjects/{code}` | Get subject profile (Chapters/Exams) |
-| `GET` | `/api/subjects/{code}/chapters/{num}` | Get specific chapter sheets |
-
-### 📄 Resource Management
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/sheets/{id}` | Detailed resource view |
-| `GET` | `/api/sheets/{id}/download` | Secure download link generation |
-| `POST` | `/api/sheets/upload` | Upload new PDF resource |
-| `GET` | `/api/my-sheets` | Current user's upload history |
-| `DELETE` | `/api/sheets/{id}` | Remove a resource |
+| `GET` | `/subjects` | List all subjects. Supports searching by `search` query parameter. |
+| `GET` | `/subjects/{code}` | Get subject profile (organized into Chapters, Midterms, and Finals). |
+| `GET` | `/subjects/{code}/chapters/{num}` | Get all approved sheets for a specific chapter number. |
+| `GET` | `/sheets/{id}` | View metadata for a specific sheet. |
+| `GET` | `/sheets/{id}/download` | Increment download counter and receive the secure file URL. |
 
 ---
 
-## 🛠 Administration (Restricted)
-These endpoints require an **Admin** role.
+## 👤 User Operations (Requires Auth)
+
+All requests below must include the `Authorization` header.
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/admin/subjects` | Register a new academic subject |
-| `PATCH` | `/api/admin/subjects/{code}` | Modify subject metadata |
-| `GET` | `/api/admin/sheets/pending` | View moderation queue |
-| `PATCH` | `/api/admin/sheets/{id}/approve` | Approve a resource for public view |
-| `PATCH` | `/api/admin/sheets/{id}/reject` | Reject and hide a resource |
+| `POST` | `/logout` | Revoke the current access token. |
+| `GET` | `/my-sheets` | List all resources uploaded by the authenticated user (including pending). |
+| `POST` | `/sheets/upload` | Upload a new PDF resource. |
+| `DELETE` | `/sheets/{id}` | Delete a resource (Owner only, or Admin). |
 
 ---
 
-## 📤 Upload Specification
-To upload a resource, send a `multipart/form-data` request to `/api/sheets/upload`:
+## 🛠 Administration (Admin Only)
 
-| Field | Type | Required | Notes |
+These endpoints are protected by the `admin` middleware.
+
+### 📄 Moderation
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/admin/sheets/pending` | View all resources awaiting approval. |
+| `PATCH` | `/admin/sheets/{id}/approve` | Approve a sheet to make it public. |
+| `PATCH` | `/admin/sheets/{id}/reject` | Mark a sheet as rejected. |
+
+### 🏛 Subject Management
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/admin/subjects` | Create a new academic subject. |
+| `PATCH` | `/admin/subjects/{id}` | Update subject details (Name/Code). |
+| `DELETE` | `/admin/subjects/{id}` | Delete a subject. |
+
+### 👥 User Management
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/admin/users` | List all registered users (Paginated). |
+| `POST` | `/admin/users` | Create a new user (Verified by default). |
+| `PATCH` | `/admin/users/{id}` | Update user details or change roles. |
+| `DELETE` | `/admin/users/{id}` | Remove a user account. |
+
+---
+
+## 📤 Request Specifications
+
+### Resource Upload (`POST /sheets/upload`)
+**Content-Type:** `multipart/form-data`
+
+| Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `title` | `string` | Yes | Max 255 chars |
-| `subject_id` | `int` | Yes | Valid Subject ID |
-| `type` | `enum` | Yes | `chapter`, `midterm`, `final` |
-| `chapter_number` | `int` | Conditional | Required if type is `chapter` |
-| `file` | `file` | Yes | PDF only, Max 20MB |
+| `title` | `string` | Yes | Max 255 characters. |
+| `subject_id` | `integer` | Yes | Valid ID from the subjects table. |
+| `type` | `enum` | Yes | `chapter`, `midterm`, `final`. |
+| `chapter_number` | `integer` | No | If omitted for `chapter` type, it increments automatically. |
+| `file` | `file` | Yes | PDF only, Max 10MB. |
 
 ---
 
-## 🌐 Error Codes
+## 🌐 HTTP Status Codes
+
 | Code | Meaning |
 | :--- | :--- |
-| `200/201` | Success / Created |
-| `401` | Unauthenticated (Missing/Invalid Token) |
-| `403` | Forbidden (Insufficient Permissions) |
-| `422` | Validation Error (Check request parameters) |
+| `200 OK` | Request successful. |
+| `201 Created` | Resource created successfully. |
+| `401 Unauthorized` | Invalid or missing Bearer token. |
+| `403 Forbidden` | Insufficient permissions (Admin required) or unverified email. |
+| `422 Unprocessable` | Validation error (check fields and error messages). |
+| `429 Too Many Requests` | Rate limit exceeded (OTP/Login attempts). |
 
 ---
 <div align="center">
-  Built with Laravel 12 & ❤️
+  Built with Laravel 12 & ❤️ for UOB Students
 </div>

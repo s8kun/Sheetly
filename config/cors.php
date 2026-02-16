@@ -1,31 +1,16 @@
 <?php
 
 return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cross-Origin Resource Sharing (CORS) Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Here you may configure your settings for cross-origin resource sharing
-    | or "CORS". This determines what cross-origin operations may execute
-    | in web browsers. You are free to adjust these settings as needed.
-    |
-    | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
-    |
-    */
-
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        'https://sheetly-omega.vercel.app',
-        'http://localhost:3000',
-        'http://localhost:5173',
-    ],
+    // 1. خلي هذي فاضية تماماً (عشان ما يصير تضارب)
+    'allowed_origins' => [],
 
-    'allowed_origins_patterns' => ['*.vercel.app'],
+    // 2. حط النجمة هنا بس!
+    // هذا يعني: "أي رابط يجي، اقبله ورجع اسمه في الهيدر"
+    'allowed_origins_patterns' => ['*'],
 
     'allowed_headers' => ['*'],
 
@@ -33,6 +18,6 @@ return [
 
     'max_age' => 0,
 
+    // 3. ضروري true عشان Sanctum يشتغل
     'supports_credentials' => true,
-
 ];
