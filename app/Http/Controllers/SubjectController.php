@@ -14,7 +14,9 @@ class SubjectController extends Controller
     // عرض كل المواد مع دعم البحث
     public function index(Request $request): JsonResponse
     {
-        $query = Subject::query();
+        $query = Subject::withCount(['sheets as chaptersCount' => function ($query) {
+            $query->where('status', 'approved');
+        }]);
 
         if ($request->filled('search')) {
             $search = strtoupper($request->input('search'));
