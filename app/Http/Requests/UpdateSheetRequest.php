@@ -28,7 +28,7 @@ class UpdateSheetRequest extends FormRequest
             'subject_id' => 'sometimes|required|exists:subjects,id',
             'type' => 'sometimes|required|in:chapter,midterm,final',
             'chapter_number' => 'nullable|integer|min:1',
-            'file' => 'sometimes|required|file|mimes:pdf|max:10240',
+            'file' => 'sometimes|required|file|mimes:pdf,docx,doc|max:10240',
         ];
     }
 }

@@ -26,6 +26,6 @@ class StoreSheetRequest extends FormRequest
             'subject_id' => 'required|exists:subjects,id',
             'type' => 'required|in:chapter,midterm,final',
             'chapter_number' => 'nullable|integer|min:1',
-            'file' => 'required|file|mimes:pdf|max:10240',        ];
+            'file' => 'required|file|mimes:pdf,docx,doc|max:10240',        ];
     }
 }
