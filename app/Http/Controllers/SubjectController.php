@@ -11,7 +11,14 @@ use Illuminate\Routing\Controller;
 
 class SubjectController extends Controller
 {
-    // عرض كل المواد مع دعم البحث
+    /**
+     * Retrieve a paginated list of all subjects.
+     * Supports optional search by 'code' or 'name'.
+     * Includes a dynamic count of approved sheets via `withCount()`.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request): JsonResponse
     {
         $query = Subject::withCount(['sheets as chaptersCount' => function ($query) {
@@ -34,7 +41,14 @@ class SubjectController extends Controller
         return response()->json($query->get());
     }
 
-    // عرض تفاصيل المادة
+    /**
+     * Retrieve the full details for a specific subject.
+     * Fetches associated distinct chapters, midterms, and finals.
+     * Only returns sheets with a status of 'approved'.
+     *
+     * @param Subject $subject The resolved Subject model via Route Model Binding.
+     * @return JsonResponse Returns subject details separated by sheet type.
+     */
     public function show(Subject $subject): JsonResponse
     {
         $chapters = $subject->sheets()
@@ -66,7 +80,13 @@ class SubjectController extends Controller
         ]);
     }
 
-    // عرض شيتات شباتر مادة واحدة
+    /**
+     * Retrieve all approved sheets belonging to a specific chapter within a subject.
+     *
+     * @param Subject $subject
+     * @param int $chapterNumber The specific chapter number (e.g., Chapter 1).
+     * @return JsonResponse Includes the subject code, chapter number, and collection of sheets.
+     */
     public function showChapter(Subject $subject, int $chapterNumber): JsonResponse
     {
         $sheets = $subject->sheets()

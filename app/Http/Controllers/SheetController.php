@@ -12,7 +12,11 @@ use Illuminate\Support\Facades\Auth;
 
 class SheetController extends Controller
 {
-    // عرض الشيتات المعتمدة (للاستخدام العام)
+    /**
+     * Retrieve all approved sheets across all subjects for public feed.
+     *
+     * @return JsonResponse Returns an array of approved sheets with associated subject data.
+     */
     public function index(): JsonResponse
     {
         $sheets = Sheet::where('status', 'approved')
@@ -58,7 +62,16 @@ class SheetController extends Controller
         return response()->json($sheet->load('subject'));
     }
 
-    // رفع شيت
+    /**
+     * Handle the upload and creation of a new Sheet.
+     * 
+     * Stores the physical file in Cloudinary organized by Subject Code and Type.
+     * Automatically calculates the next chapter number if one is not provided for 'chapter' types.
+     *
+     * @param StoreSheetRequest $request Validated request containing the file, subject_id, and metadata.
+     * @return JsonResponse Returns the created sheet model.
+     * @throws \Exception If Cloudinary upload fails.
+     */
     public function store(StoreSheetRequest $request): JsonResponse
     {
         $subject = Subject::findOrFail($request->subject_id);
@@ -120,7 +133,13 @@ class SheetController extends Controller
         ], 201);
     }
 
-    // تحميل الشيت
+    /**
+     * Retrieve the secure download URL for a file and increment its download counter.
+     * Ensures only approved sheets or authorized users can download.
+     *
+     * @param Sheet $sheet The resolved Sheet model.
+     * @return JsonResponse JSON object containing the `download_url`.
+     */
     public function download(Sheet $sheet): JsonResponse
     {
         if ($sheet->status !== 'approved' && (! Auth::check() || (Auth::user()->role !== 'admin' && Auth::id() !== $sheet->user_id))) {

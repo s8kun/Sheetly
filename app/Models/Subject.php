@@ -13,6 +13,11 @@ class Subject extends Model
     protected $fillable = [
         'name', 'code'
     ];
+    /**
+     * Get the sheets associated with the subject.
+     *
+     * @return HasMany
+     */
     public function sheets(): HasMany
     {
         return $this->hasMany(Sheet::class);
