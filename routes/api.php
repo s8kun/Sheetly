@@ -37,17 +37,19 @@ Route::controller(AuthController::class)->group(function () {
 });
 
 // Public Routes
-Route::get('/subjects', [SubjectController::class, 'index']);
-Route::get('/subjects/{subject}', [SubjectController::class, 'show']);
-Route::get('/subjects/{subject}/chapters/{chapterNumber}', [SubjectController::class, 'showChapter']);
-Route::get('/sheets/{sheet}', [SheetController::class, 'show']); // مسار عرض الشيت الواحد (مسموح للكل كبيانات)
-Route::get('/sheets/{sheet}/download', [SheetController::class, 'download']);
 
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->middleware('throttle:otp');
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->middleware('throttle:otp');
 
 // Protected Routes (User & Admin)
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/subjects', [SubjectController::class, 'index']);
+    Route::get('/subjects/{subject}', [SubjectController::class, 'show']);
+    Route::get('/subjects/{subject}/chapters/{chapterNumber}', [SubjectController::class, 'showChapter']);
+    Route::get('/sheets/{sheet}', [SheetController::class, 'show']); // مسار عرض الشيت الواحد (مسموح للكل كبيانات)
+    Route::get('/sheets/{sheet}/download', [SheetController::class, 'download']);
+
+
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // User's Sheet Management
